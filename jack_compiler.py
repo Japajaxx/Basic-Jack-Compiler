@@ -1,4 +1,4 @@
-#Call with "python hack_assembler.py <filename>"
+#Call with "python jack_compiler.py <filename>"
 
 import sys
 
@@ -6,9 +6,11 @@ def parser(file_path):
 
     def remove_whitespace_and_labels():
         for i in lines:
-            if i[0] != "\n":
-                i = i.strip()
-                if i[0] != "/":
+            if i[0] != "\n" and i[0] != "/" and i != "	\n":
+                i = i.replace("	", "")
+                i = i.split(" ")
+                lines_new.append(i)
+
 
     file = open(file_path, 'r')
     lines = file.readlines()
@@ -16,18 +18,26 @@ def parser(file_path):
 
     lines_new = []
     remove_whitespace_and_labels()
-    symbols()
 
     return lines_new
 
+def code(parsed_lines, filename):
+
+    xml_file = open(filename + (".xml"), "a")
+
+    for i in parsed_lines:
+        for j in i:
+            xml_file.write(j);
+
 def hack_assembler():
-    if len(sys.argv) != 2:
-        print("Usage: python jack_compiler.py <filename>")
-        return
+    #if len(sys.argv) != 2:
+    #    print("Usage: python jack_compiler.py <filename>")
+    #    return
     
-    filename = sys.argv[1]
-    parsed_lines = parser(filename)
-    code(parsed_lines, filename.replace(".jack", ""))
+    #filename = sys.argv[1]
+
+    parsed_lines = parser("Main.jack")
+    code(parsed_lines, "Main")
 
 hack_assembler()
 
