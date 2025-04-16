@@ -9,7 +9,9 @@ def parser(file_path):
             if i[0] != "\n" and i[0] != "/" and i != "	\n":
                 i = i.replace("	", "")
                 i = i.split(" ")
-                lines_new.append(i)
+                for j in i:
+                    if j != "":
+                        lines_new.append(f"<keyword> {j} <keyword>\n")
 
 
     file = open(file_path, 'r')
