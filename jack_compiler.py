@@ -2,6 +2,8 @@
 
 import sys
 
+symbols = ";,{{}}()[]=.+-".format()
+
 def parser(file_path):
 
     def remove_whitespace_and_labels():
@@ -11,7 +13,11 @@ def parser(file_path):
                 i = i.split(" ")
                 for j in i:
                     if j != "":
-                        lines_new.append(f"<keyword> {j} <keyword>\n")
+                        j = j.replace("\n", "")
+                        if j in symbols:
+                            lines_new.append(f"<symbol> {j} <symbol>\n")
+                        else:
+                            lines_new.append(f"<keyword> {j} <keyword>\n")
 
 
     file = open(file_path, 'r')
