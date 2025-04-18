@@ -2,7 +2,18 @@
 
 import sys
 
-symbols = ";,{{}}()[]=.+-".format()
+symbols = [";",
+           ",",
+           "{{".format(),
+           "}}".format(),
+           "(",
+           ")",
+           "[",
+           "]",
+           "=",
+           ".",
+           "+",
+           "-"]
 
 def parser(file_path):
 
