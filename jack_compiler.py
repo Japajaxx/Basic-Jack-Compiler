@@ -16,6 +16,8 @@ def parser(file_path):
                         j = j.replace("\n", "")
                         if j in symbols:
                             lines_new.append(f"<symbol> {j} <symbol>\n")
+                        elif j == "<":
+                            lines_new.append("<symbol> &lt; <symbol>\n")
                         else:
                             lines_new.append(f"<keyword> {j} <keyword>\n")
 
