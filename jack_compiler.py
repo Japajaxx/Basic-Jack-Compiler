@@ -18,6 +18,7 @@ symbols = [";",
 def parser(file_path):
 
     def remove_whitespace_and_labels():
+        lines_new.append(f"<tokens>\n")
         for i in lines:
             if i[0] != "\n" and i[0] != "/" and i != "	\n":
                 i = i.replace("	", "")
@@ -25,12 +26,18 @@ def parser(file_path):
                 for j in i:
                     if j != "":
                         j = j.replace("\n", "")
-                        if j in symbols:
-                            lines_new.append(f"<symbol> {j} <symbol>\n")
-                        elif j == "<":
-                            lines_new.append("<symbol> &lt; <symbol>\n")
-                        else:
-                            lines_new.append(f"<keyword> {j} <keyword>\n")
+                        temp = ""
+                        for char in j:
+                            if char in symbols:
+                                if temp:
+                                    lines_new.append(f"<keyword> {temp} <keyword>\n")
+                                    temp = ""
+                                lines_new.append(f"<symbol> {char} <symbol>\n")
+                            else:
+                                temp += char
+                        if temp:
+                            lines_new.append(f"<keyword> {temp} <keyword>\n")
+        lines_new.append(f"<tokens\>\n")
 
 
     file = open(file_path, 'r')
