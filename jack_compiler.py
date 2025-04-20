@@ -15,6 +15,16 @@ symbols = [";",
            "+",
            "-"]
 
+keywords = ["class",
+            "function",
+            "void",
+            "var",
+            "int",
+            "let",
+            "while",
+            "do",
+            "return"]
+
 def parser(file_path):
 
     def remove_whitespace_and_labels():
@@ -30,14 +40,20 @@ def parser(file_path):
                         for char in j:
                             if char in symbols:
                                 if temp:
-                                    lines_new.append(f"<keyword> {temp} <keyword>\n")
+                                    if temp in keywords:
+                                        lines_new.append(f"<keyword> {temp} </keyword>\n")
+                                    else:
+                                        lines_new.append(f"<identifier> {temp} </identifier>\n")
                                     temp = ""
-                                lines_new.append(f"<symbol> {char} <symbol>\n")
+                                lines_new.append(f"<symbol> {char} </symbol>\n")
                             else:
                                 temp += char
                         if temp:
-                            lines_new.append(f"<keyword> {temp} <keyword>\n")
-        lines_new.append(f"<tokens\>\n")
+                            if temp in keywords:
+                                lines_new.append(f"<keyword> {temp} </keyword>\n")
+                            else:
+                                lines_new.append(f"<identifier> {temp} </identifier>\n")
+        lines_new.append(f"</tokens>\n")
 
 
     file = open(file_path, 'r')
