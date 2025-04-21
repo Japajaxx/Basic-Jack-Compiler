@@ -13,7 +13,8 @@ symbols = [";",
            "=",
            ".",
            "+",
-           "-"]
+           "-",
+           "/"]
 
 keywords = ["class",
             "function",
@@ -24,6 +25,8 @@ keywords = ["class",
             "while",
             "do",
             "return"]
+
+comp = {"<": "&lt;"}
 
 def parser(file_path):
 
@@ -42,6 +45,8 @@ def parser(file_path):
                                 if temp:
                                     if temp in keywords:
                                         lines_new.append(f"<keyword> {temp} </keyword>\n")
+                                    elif temp.isdigit():
+                                        lines_new.append(f"<integerConstant> {temp} </integerConstant>\n")
                                     else:
                                         lines_new.append(f"<identifier> {temp} </identifier>\n")
                                     temp = ""
@@ -51,6 +56,10 @@ def parser(file_path):
                         if temp:
                             if temp in keywords:
                                 lines_new.append(f"<keyword> {temp} </keyword>\n")
+                            elif temp.isdigit():
+                                lines_new.append(f"<integerConstant> {temp} </integerConstant>\n")
+                            elif temp in comp:
+                                lines_new.append(f"<symbol> {comp[temp]} </symbol>\n")
                             else:
                                 lines_new.append(f"<identifier> {temp} </identifier>\n")
         lines_new.append(f"</tokens>\n")
