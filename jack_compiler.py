@@ -35,35 +35,64 @@ def parser(file_path):
         for i in lines:
             if i[0] != "\n" and i[0] != "/" and i != "	\n":
                 i = i.replace("	", "")
-                i = i.split(" ")
-                for j in i:
-                    if j != "":
-                        j = j.replace("\n", "")
-                        temp = ""
-                        for char in j:
-                            if char in symbols:
-                                if temp:
-                                    if temp in keywords:
-                                        lines_new.append(f"<keyword> {temp} </keyword>\n")
-                                    elif temp.isdigit():
-                                        lines_new.append(f"<integerConstant> {temp} </integerConstant>\n")
-                                    else:
-                                        lines_new.append(f"<identifier> {temp} </identifier>\n")
-                                    temp = ""
-                                lines_new.append(f"<symbol> {char} </symbol>\n")
-                            else:
-                                temp += char
-                        if temp:
+                temp = ""
+                in_string = False
+                for char in i:
+                    if char == '"':
+                        if in_string:
+                            temp += char
+                            lines_new.append(f"<stringConstant> {temp[1:-1]} </stringConstant>\n")
+                            temp = ""
+                            in_string = False
+                        else:
+                            if temp.strip():
+                                if temp in keywords:
+                                    lines_new.append(f"<keyword> {temp.strip()} </keyword>\n")
+                                elif temp.isdigit():
+                                    lines_new.append(f"<integerConstant> {temp.strip()} </integerConstant>\n")
+                                elif temp in comp:
+                                    lines_new.append(f"<symbol> {comp[temp]} </symbol>\n")
+                                else:
+                                    lines_new.append(f"<identifier> {temp.strip()} </identifier>\n")
+                            temp = char
+                            in_string = True
+                    elif in_string:
+                        temp += char
+                    elif char in symbols:
+                        if temp.strip():
                             if temp in keywords:
-                                lines_new.append(f"<keyword> {temp} </keyword>\n")
+                                lines_new.append(f"<keyword> {temp.strip()} </keyword>\n")
                             elif temp.isdigit():
-                                lines_new.append(f"<integerConstant> {temp} </integerConstant>\n")
+                                lines_new.append(f"<integerConstant> {temp.strip()} </integerConstant>\n")
                             elif temp in comp:
                                 lines_new.append(f"<symbol> {comp[temp]} </symbol>\n")
                             else:
-                                lines_new.append(f"<identifier> {temp} </identifier>\n")
+                                lines_new.append(f"<identifier> {temp.strip()} </identifier>\n")
+                            temp = ""
+                        lines_new.append(f"<symbol> {char} </symbol>\n")
+                    elif char.isspace():
+                        if temp.strip():
+                            if temp in keywords:
+                                lines_new.append(f"<keyword> {temp.strip()} </keyword>\n")
+                            elif temp.isdigit():
+                                lines_new.append(f"<integerConstant> {temp.strip()} </integerConstant>\n")
+                            elif temp in comp:
+                                lines_new.append(f"<symbol> {comp[temp]} </symbol>\n")
+                            else:
+                                lines_new.append(f"<identifier> {temp.strip()} </identifier>\n")
+                            temp = ""
+                    else:
+                        temp += char
+                if temp.strip() and not in_string:
+                    if temp in keywords:
+                        lines_new.append(f"<keyword> {temp.strip()} </keyword>\n")
+                    elif temp.isdigit():
+                        lines_new.append(f"<integerConstant> {temp.strip()} </integerConstant>\n")
+                    elif temp in comp:
+                        lines_new.append(f"<symbol> {comp[temp]} </symbol>\n")
+                    else:
+                        lines_new.append(f"<identifier> {temp.strip()} </identifier>\n")
         lines_new.append(f"</tokens>\n")
-
 
     file = open(file_path, 'r')
     lines = file.readlines()
