@@ -14,7 +14,9 @@ symbols = [";",
            ".",
            "+",
            "-",
-           "/"]
+           "*",
+           "/",
+           "|"]
 
 keywords = ["class",
             "function",
@@ -28,6 +30,9 @@ keywords = ["class",
             "else",
             "while",
             "do",
+            "true",
+            "false",
+            "null",
             "return"]
 
 comp = {"<": "&lt;"}
@@ -40,6 +45,14 @@ def parser(file_path):
             if i[0] != "\n" and i[0] != "/" and i != "	\n":
                 if "//" in i:
                     i = i.split("//")[0]
+
+                while "/**" in i:
+                    start = i.find("/**")
+                    end = i.find("*/", start) + 2
+                    if end > 1:
+                        i = i[:start] + i[end:]
+                    else:
+                        i = i[:start]
 
                 i = i.replace("	", "")
                 temp = ""
@@ -125,8 +138,8 @@ def hack_assembler():
     
     #filename = sys.argv[1]
 
-    parsed_lines = parser("Main.jack")
-    code(parsed_lines, "Main")
+    parsed_lines = parser("Square.jack")
+    code(parsed_lines, "Square")
 
 hack_assembler()
 
