@@ -19,9 +19,13 @@ symbols = [";",
 keywords = ["class",
             "function",
             "void",
+            "static",
+            "boolean",
             "var",
             "int",
             "let",
+            "if",
+            "else",
             "while",
             "do",
             "return"]
@@ -34,6 +38,9 @@ def parser(file_path):
         lines_new.append(f"<tokens>\n")
         for i in lines:
             if i[0] != "\n" and i[0] != "/" and i != "	\n":
+                if "//" in i:
+                    i = i.split("//")[0]
+
                 i = i.replace("	", "")
                 temp = ""
                 in_string = False
