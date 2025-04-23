@@ -1,6 +1,7 @@
 #Call with "python jack_compiler.py <filename>"
 
 import sys
+import os
 
 symbols = [";",
            ",",
@@ -16,15 +17,20 @@ symbols = [";",
            "-",
            "*",
            "/",
-           "|"]
+           "|",
+           "~"]
 
 keywords = ["class",
+            "method",
             "function",
             "void",
             "static",
             "boolean",
+            "field",
+            "constructor",
             "var",
             "int",
+            "char",
             "let",
             "if",
             "else",
@@ -33,26 +39,30 @@ keywords = ["class",
             "true",
             "false",
             "null",
+            "this",
             "return"]
 
-comp = {"<": "&lt;"}
+comp = {"<": "&lt;",
+        ">": "&gt;",
+        "&": "&amp;"}
 
 def parser(file_path):
 
     def remove_whitespace_and_labels():
         lines_new.append(f"<tokens>\n")
         for i in lines:
-            if i[0] != "\n" and i[0] != "/" and i != "	\n":
+            if i[0] != "\n" and i[0] != "/" and i != "	\n" and i[0] != "*":
                 if "//" in i:
                     i = i.split("//")[0]
 
-                while "/**" in i:
-                    start = i.find("/**")
-                    end = i.find("*/", start) + 2
-                    if end > 1:
-                        i = i[:start] + i[end:]
-                    else:
-                        i = i[:start]
+                if "/**" in i:
+                    i = i.split("/**")[0]
+
+                if "*" in i:
+                    i= i.strip()
+                    if i[0] == "*":
+                        continue
+
 
                 i = i.replace("	", "")
                 temp = ""
@@ -132,14 +142,21 @@ def code(parsed_lines, filename):
             xml_file.write(j);
 
 def hack_assembler():
-    #if len(sys.argv) != 2:
-    #    print("Usage: python jack_compiler.py <filename>")
-    #    return
+    if len(sys.argv) != 2:
+        print("Usage: python jack_compiler.py <folder_path>")
+        return
     
-    #filename = sys.argv[1]
+    folder_path = sys.argv[1]
 
-    parsed_lines = parser("Square.jack")
-    code(parsed_lines, "Square")
+    if not os.path.isdir(folder_path):
+        print(f"Error: {folder_path} is not a valid directory.")
+        return
+
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".jack"):
+            file_path = os.path.join(folder_path, filename)
+            parsed_lines = parser(file_path)
+            code(parsed_lines, os.path.splitext(file_path)[0])
 
 hack_assembler()
 
