@@ -48,7 +48,7 @@ comp = {"<": "&lt;",
 
 def parser(file_path):
 
-    def remove_whitespace_and_labels():
+    def token():
         lines_new.append(f"<tokens>\n")
         for i in lines:
             if i[0] != "\n" and i[0] != "/" and i != "	\n" and i[0] != "*":
@@ -129,17 +129,31 @@ def parser(file_path):
     file.close()
 
     lines_new = []
-    remove_whitespace_and_labels()
+    token()
 
     return lines_new
+            
 
 def code(parsed_lines, filename):
 
+    xml_file_T = open(filename + ("T.xml"), "a")
     xml_file = open(filename + (".xml"), "a")
 
+    indent = "  "
+    indendNum = 0
+
     for i in parsed_lines:
-        for j in i:
-            xml_file.write(j);
+        xml_file_T.write(i);
+        if "token" in i:
+            continue
+        if "class" in i:
+            xml_file.write("<class>\n")
+            indendNum += 1
+        xml_file.write((indendNum * indent) + i)
+        
+    xml_file_T.close()
+    xml_file.close()
+        
 
 def hack_assembler():
     if len(sys.argv) != 2:
