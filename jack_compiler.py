@@ -139,17 +139,107 @@ def code(parsed_lines, filename):
     xml_file_T = open(filename + ("T.xml"), "a")
     xml_file = open(filename + (".xml"), "a")
 
+
+    indentLayer = []
     indent = "  "
     indendNum = 0
+    inClass = True
+    funcDec = False
+    inState = False
+    expressionOn = False
 
     for i in parsed_lines:
         xml_file_T.write(i);
-        if "token" in i:
-            continue
-        if "class" in i:
-            xml_file.write("<class>\n")
-            indendNum += 1
-        xml_file.write((indendNum * indent) + i)
+
+        if i != "<tokens>\n" and i != "</tokens>\n":
+
+            if i == "<keyword> class </keyword>\n":
+                xml_file.write((indent * indendNum) + "<class>\n")
+                indendNum += 1
+                xml_file.write((indent * indendNum) + i)
+                indentLayer.append("</class>\n")
+
+            elif i == "<keyword> static </keyword>\n" or i == "<keyword> var </keyword>\n":
+                if inClass:
+                    xml_file.write((indent * indendNum) + "<classVarDec>\n")
+                    indentLayer.append("</classVarDec>\n")
+                else:
+                    xml_file.write((indent * indendNum) + "<varDec>\n")
+                    indentLayer.append("</varDec>\n")
+                indendNum += 1
+                xml_file.write((indent * indendNum) + i)
+                
+            elif i == "<symbol> ; </symbol>\n":
+                xml_file.write((indent * indendNum) + i)
+                indendNum += -1
+                xml_file.write((indent * indendNum) + indentLayer[-1])
+                indentLayer.pop()
+            
+            elif i == "<keyword> function </keyword>\n":
+                xml_file.write((indent * indendNum) + "<subroutineDec>\n")
+                indendNum += 1
+                indentLayer.append("</subroutineDec>\n")
+                funcDec = True
+                inClass = False
+                xml_file.write((indent * indendNum) + i)
+
+            elif i == "<symbol> ( </symbol>\n":
+                xml_file.write((indent * indendNum) + i)
+                xml_file.write((indent * indendNum) + "<parameterList>\n")
+                indendNum += 1
+                indentLayer.append("</parameterList>\n")
+
+            elif i == "<symbol> ) </symbol>\n":
+                indendNum -= 1
+                xml_file.write((indent * indendNum) + indentLayer[-1])
+                xml_file.write((indent * indendNum) + i)
+                indentLayer.pop()
+
+            elif i == "<symbol> { </symbol>\n":
+                if funcDec:
+                    xml_file.write((indent * indendNum) + "<subroutineBody>\n")
+                    indentLayer.append("</subroutineBody>\n")
+                    indendNum += 1
+                    funcDec = False
+                xml_file.write((indent * indendNum) + i)
+            
+            elif i == "<keyword> let </keyword>\n":
+                inState = True
+                xml_file.write((indent * indendNum) + "<statements>\n")
+                indentLayer.append("</statements>\n")
+                indendNum += 1
+
+                xml_file.write((indent * indendNum) + "<letStatement>\n")
+                indendNum += 1
+                xml_file.write((indent * indendNum) + i)
+                indentLayer.append("</letStatement>\n")
+
+            elif i == "<symbol> = </symbol>\n":
+                xml_file.write((indent * indendNum) + i)
+                if inState:
+                    xml_file.write((indent * indendNum) + "<expression>\n")
+                    indendNum += 1
+                    xml_file.write((indent * indendNum) + "<term>\n")
+                    indendNum += 1
+                    expressionOn = True
+
+            elif i == "<keyword> do </keyword>\n":
+                xml_file.write((indent * indendNum) + "<doStatement>\n")
+                indendNum += 1
+                xml_file.write((indent * indendNum) + i)
+                indentLayer.append("</doStatement>\n")
+
+            elif expressionOn:
+                xml_file.write((indent * indendNum) + i)
+                indendNum -= 1
+                xml_file.write((indent * indendNum) + "</term>\n")
+                indendNum -= 1
+                xml_file.write((indent * indendNum) + "</expression>\n")
+                expressionOn = False
+
+            else:
+                xml_file.write((indent * indendNum) + i)
+
         
     xml_file_T.close()
     xml_file.close()
