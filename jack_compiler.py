@@ -143,10 +143,11 @@ def code(parsed_lines, filename):
     indentLayer = []
     indent = "  "
     indendNum = 0
-    inClass = True
+    inClass = False
     funcDec = False
     inState = False
     expressionOn = False
+    inIf = False
 
     for i in parsed_lines:
         xml_file_T.write(i);
@@ -154,6 +155,7 @@ def code(parsed_lines, filename):
         if i != "<tokens>\n" and i != "</tokens>\n":
 
             if i == "<keyword> class </keyword>\n":
+                inClass = True
                 xml_file.write((indent * indendNum) + "<class>\n")
                 indendNum += 1
                 xml_file.write((indent * indendNum) + i)
@@ -185,15 +187,25 @@ def code(parsed_lines, filename):
 
             elif i == "<symbol> ( </symbol>\n":
                 xml_file.write((indent * indendNum) + i)
-                xml_file.write((indent * indendNum) + "<parameterList>\n")
+                if funcDec:    
+                    xml_file.write((indent * indendNum) + "<parameterList>\n")
+                    indentLayer.append("</parameterList>\n")
+                elif inIf:
+                    xml_file.write((indent * indendNum) + "<expression>\n")
+                    indendNum += 1
+                    xml_file.write((indent * indendNum) + "<term>\n")
+                    expressionOn = True
+                else:
+                    xml_file.write((indent * indendNum) + "<expressionList>\n")
+                    indentLayer.append("</expressionList>\n")
                 indendNum += 1
-                indentLayer.append("</parameterList>\n")
-
+                
             elif i == "<symbol> ) </symbol>\n":
-                indendNum -= 1
-                xml_file.write((indent * indendNum) + indentLayer[-1])
+                if not inIf:
+                    indendNum -= 1
+                    xml_file.write((indent * indendNum) + indentLayer[-1])
+                    indentLayer.pop()
                 xml_file.write((indent * indendNum) + i)
-                indentLayer.pop()
 
             elif i == "<symbol> { </symbol>\n":
                 if funcDec:
@@ -201,18 +213,50 @@ def code(parsed_lines, filename):
                     indentLayer.append("</subroutineBody>\n")
                     indendNum += 1
                     funcDec = False
-                xml_file.write((indent * indendNum) + i)
+                    xml_file.write((indent * indendNum) + i)
+                elif inIf:
+                    xml_file.write((indent * indendNum) + i)
+                    xml_file.write((indent * indendNum) + "<statements>\n")
+                    indentLayer.append("</statements>\n")
+                else:
+                    xml_file.write((indent * indendNum) + i)
+
+
+            elif i == "<symbol> } </symbol>\n":
+                if indentLayer:
+                    if indentLayer[-1] == "</statements>\n":
+                        indendNum -= 1
+                        xml_file.write((indent * indendNum) + indentLayer[-1])
+                        indentLayer.pop()
+                    xml_file.write((indent * indendNum) + i)
+                    if not inIf:
+                        indendNum -= 1
+                    xml_file.write((indent * indendNum) + indentLayer[-1])
+                    indentLayer.pop()
+
+                if indentLayer:
+                    if indentLayer[-1] == "</subroutineDec>\n":
+                        indendNum -= 1
+                        xml_file.write((indent * indendNum) + indentLayer[-1])
+                        indentLayer.pop()
+
             
-            elif i == "<keyword> let </keyword>\n":
+            elif i == "<keyword> let </keyword>\n" or i == "<keyword> if </keyword>\n":
                 inState = True
                 xml_file.write((indent * indendNum) + "<statements>\n")
                 indentLayer.append("</statements>\n")
                 indendNum += 1
 
-                xml_file.write((indent * indendNum) + "<letStatement>\n")
+                if i == "<keyword> let </keyword>\n":
+                    xml_file.write((indent * indendNum) + "<letStatement>\n")
+                    indentLayer.append("</letStatement>\n")
+                elif i == "<keyword> if </keyword>\n":
+                    xml_file.write((indent * indendNum) + "<ifStatement>\n")
+                    indentLayer.append("</ifStatement>\n")
+                    inIf = True
+
                 indendNum += 1
                 xml_file.write((indent * indendNum) + i)
-                indentLayer.append("</letStatement>\n")
 
             elif i == "<symbol> = </symbol>\n":
                 xml_file.write((indent * indendNum) + i)
@@ -228,6 +272,12 @@ def code(parsed_lines, filename):
                 indendNum += 1
                 xml_file.write((indent * indendNum) + i)
                 indentLayer.append("</doStatement>\n")
+
+            elif i =="<keyword> return </keyword>\n":
+                xml_file.write((indent * indendNum) + "<returnStatement>\n")
+                indendNum += 1
+                xml_file.write((indent * indendNum) + i)
+                indentLayer.append("</returnStatement>\n")
 
             elif expressionOn:
                 xml_file.write((indent * indendNum) + i)
