@@ -137,161 +137,260 @@ def parser(file_path):
 def code(parsed_lines, filename):
 
     xml_file_T = open(filename + ("T.xml"), "a")
-    xml_file = open(filename + (".xml"), "a")
-
-
-    indentLayer = []
-    indent = "  "
-    indendNum = 0
-    inClass = False
-    funcDec = False
-    inState = False
-    expressionOn = False
-    inIf = False
 
     for i in parsed_lines:
-        xml_file_T.write(i);
+        xml_file_T.write(i)
 
-        if i != "<tokens>\n" and i != "</tokens>\n":
+    xml_file_T.close()
 
-            if i == "<keyword> class </keyword>\n":
-                inClass = True
-                xml_file.write((indent * indendNum) + "<class>\n")
-                indendNum += 1
-                xml_file.write((indent * indendNum) + i)
-                indentLayer.append("</class>\n")
+    xml_file = open(filename + (".xml"), "a")
 
-            elif i == "<keyword> static </keyword>\n" or i == "<keyword> var </keyword>\n":
-                if inClass:
-                    xml_file.write((indent * indendNum) + "<classVarDec>\n")
-                    indentLayer.append("</classVarDec>\n")
-                else:
-                    xml_file.write((indent * indendNum) + "<varDec>\n")
-                    indentLayer.append("</varDec>\n")
-                indendNum += 1
-                xml_file.write((indent * indendNum) + i)
-                
-            elif i == "<symbol> ; </symbol>\n":
-                xml_file.write((indent * indendNum) + i)
-                indendNum += -1
-                xml_file.write((indent * indendNum) + indentLayer[-1])
-                indentLayer.pop()
-            
-            elif i == "<keyword> function </keyword>\n":
-                xml_file.write((indent * indendNum) + "<subroutineDec>\n")
-                indendNum += 1
-                indentLayer.append("</subroutineDec>\n")
-                funcDec = True
-                inClass = False
-                xml_file.write((indent * indendNum) + i)
+    index = 0
 
-            elif i == "<symbol> ( </symbol>\n":
-                xml_file.write((indent * indendNum) + i)
-                if funcDec:    
-                    xml_file.write((indent * indendNum) + "<parameterList>\n")
-                    indentLayer.append("</parameterList>\n")
-                elif inIf:
-                    xml_file.write((indent * indendNum) + "<expression>\n")
-                    indendNum += 1
-                    xml_file.write((indent * indendNum) + "<term>\n")
-                    expressionOn = True
-                else:
-                    xml_file.write((indent * indendNum) + "<expressionList>\n")
-                    indentLayer.append("</expressionList>\n")
-                indendNum += 1
-                
-            elif i == "<symbol> ) </symbol>\n":
-                if not inIf:
-                    indendNum -= 1
-                    xml_file.write((indent * indendNum) + indentLayer[-1])
-                    indentLayer.pop()
-                xml_file.write((indent * indendNum) + i)
+    def classDec(index):
+        xml_file.write("<class>\n")
+        while parsed_lines[index] != "<symbol> { </symbol>\n":
+            xml_file.write(parsed_lines[index])
+            index += 1
+        xml_file.write(parsed_lines[index])
+        index += 1
 
-            elif i == "<symbol> { </symbol>\n":
-                if funcDec:
-                    xml_file.write((indent * indendNum) + "<subroutineBody>\n")
-                    indentLayer.append("</subroutineBody>\n")
-                    indendNum += 1
-                    funcDec = False
-                    xml_file.write((indent * indendNum) + i)
-                elif inIf:
-                    xml_file.write((indent * indendNum) + i)
-                    xml_file.write((indent * indendNum) + "<statements>\n")
-                    indentLayer.append("</statements>\n")
-                else:
-                    xml_file.write((indent * indendNum) + i)
-
-
-            elif i == "<symbol> } </symbol>\n":
-                if indentLayer:
-                    if indentLayer[-1] == "</statements>\n":
-                        indendNum -= 1
-                        xml_file.write((indent * indendNum) + indentLayer[-1])
-                        indentLayer.pop()
-                    xml_file.write((indent * indendNum) + i)
-                    if not inIf:
-                        indendNum -= 1
-                    xml_file.write((indent * indendNum) + indentLayer[-1])
-                    indentLayer.pop()
-
-                if indentLayer:
-                    if indentLayer[-1] == "</subroutineDec>\n":
-                        indendNum -= 1
-                        xml_file.write((indent * indendNum) + indentLayer[-1])
-                        indentLayer.pop()
-
-            
-            elif i == "<keyword> let </keyword>\n" or i == "<keyword> if </keyword>\n":
-                inState = True
-                xml_file.write((indent * indendNum) + "<statements>\n")
-                indentLayer.append("</statements>\n")
-                indendNum += 1
-
-                if i == "<keyword> let </keyword>\n":
-                    xml_file.write((indent * indendNum) + "<letStatement>\n")
-                    indentLayer.append("</letStatement>\n")
-                elif i == "<keyword> if </keyword>\n":
-                    xml_file.write((indent * indendNum) + "<ifStatement>\n")
-                    indentLayer.append("</ifStatement>\n")
-                    inIf = True
-
-                indendNum += 1
-                xml_file.write((indent * indendNum) + i)
-
-            elif i == "<symbol> = </symbol>\n":
-                xml_file.write((indent * indendNum) + i)
-                if inState:
-                    xml_file.write((indent * indendNum) + "<expression>\n")
-                    indendNum += 1
-                    xml_file.write((indent * indendNum) + "<term>\n")
-                    indendNum += 1
-                    expressionOn = True
-
-            elif i == "<keyword> do </keyword>\n":
-                xml_file.write((indent * indendNum) + "<doStatement>\n")
-                indendNum += 1
-                xml_file.write((indent * indendNum) + i)
-                indentLayer.append("</doStatement>\n")
-
-            elif i =="<keyword> return </keyword>\n":
-                xml_file.write((indent * indendNum) + "<returnStatement>\n")
-                indendNum += 1
-                xml_file.write((indent * indendNum) + i)
-                indentLayer.append("</returnStatement>\n")
-
-            elif expressionOn:
-                xml_file.write((indent * indendNum) + i)
-                indendNum -= 1
-                xml_file.write((indent * indendNum) + "</term>\n")
-                indendNum -= 1
-                xml_file.write((indent * indendNum) + "</expression>\n")
-                expressionOn = False
-
+        while parsed_lines[index] != "<symbol> } </symbol>\n":
+            if parsed_lines[index] != "<keyword> static </keyword>\n" and parsed_lines[index] != "<keyword> field </keyword>\n":
+                index = subroutineDec(index)
             else:
-                xml_file.write((indent * indendNum) + i)
+                index = classVarDec(index)
+
+        xml_file.write("</class>\n")
+
+        return index
+    
+
+    def classVarDec(index):
+        xml_file.write("<classVarDec>\n")
+        while parsed_lines[index] != "<symbol> ; </symbol>\n":
+            xml_file.write(parsed_lines[index])
+            index += 1
+        xml_file.write(parsed_lines[index])
+        index += 1
+        xml_file.write("</classVarDec>\n")
+        return index
+
+
+    def subroutineDec(index):
+        xml_file.write("<subroutineDec>\n")
+        while parsed_lines[index] != "<symbol> ( </symbol>\n":
+            xml_file.write(parsed_lines[index])
+            index += 1
+        xml_file.write(parsed_lines[index])
+        index += 1
+
+        index = parameterListDec(index)
+        xml_file.write("<subroutineBody>\n")
+        while parsed_lines[index] != "<symbol> } </symbol>\n":
+
+            if parsed_lines[index] == "<keyword> var </keyword>\n":
+                index = varDec(index)
+            elif parsed_lines[index] == "<keyword> let </keyword>\n" or parsed_lines[index] == "<keyword> if </keyword>\n" or parsed_lines[index] == "<keyword> while </keyword>\n" or parsed_lines[index] == "<keyword> do </keyword>\n" or parsed_lines[index] == "<keyword> return </keyword>\n":
+                index = statementDec(index)
+            else:
+                xml_file.write(parsed_lines[index])
+                index += 1
+        
+        xml_file.write(parsed_lines[index])
+        index += 1
+        xml_file.write("</subroutineBody>\n")
+        xml_file.write("</subroutineDec>\n")
+        xml_file.write(parsed_lines[index])
+
+        return index
+    
+
+    def parameterListDec(index):
+        xml_file.write("<parameterList>\n")
+
+        while parsed_lines[index] != "<symbol> ) </symbol>\n":
+            xml_file.write(parsed_lines[index])
+            index += 1
+
+        xml_file.write("</parameterList>\n")
+        xml_file.write(parsed_lines[index])
+        index += 1
+
+        return index
 
         
-    xml_file_T.close()
+    def varDec(index):
+        xml_file.write("<varDec>\n")
+        while parsed_lines[index] != "<symbol> ; </symbol>\n":
+            xml_file.write(parsed_lines[index])
+            index += 1
+        xml_file.write(parsed_lines[index])
+        index += 1
+        xml_file.write("</varDec>\n")
+
+        return index
+
+
+    def statementDec(index):
+        xml_file.write("<statements>\n")
+
+        while parsed_lines[index] == "<keyword> let </keyword>\n" or parsed_lines[index] == "<keyword> if </keyword>\n" or parsed_lines[index] == "<keyword> while </keyword>\n" or parsed_lines[index] == "<keyword> do </keyword>\n" or parsed_lines[index] == "<keyword> return </keyword>\n":
+            if parsed_lines[index] == "<keyword> let </keyword>\n":
+                index = letDec(index)
+            if parsed_lines[index] == "<keyword> if </keyword>\n":
+                index = ifDec(index)
+            if parsed_lines[index] == "<keyword> while </keyword>\n":
+                index = whileDec(index)
+            if parsed_lines[index] == "<keyword> do </keyword>\n":
+                index = doDec(index)
+            if parsed_lines[index] == "<keyword> return </keyword>\n":
+                index = returnDec(index)
+
+        xml_file.write("</statements>\n")
+
+        return index
+
+
+    def doDec(index):
+        xml_file.write("<doStatement>\n")
+        while parsed_lines[index] != "<symbol> ; </symbol>\n":
+            if parsed_lines[index] == "<symbol> ( </symbol>\n":
+                index = expressionDecList(index)
+            else:
+                xml_file.write(parsed_lines[index])
+                index += 1
+
+        xml_file.write(parsed_lines[index])
+        index += 1
+        xml_file.write("</doStatement>\n")
+
+        return index
+    
+    def returnDec(index):
+        xml_file.write("<returnStatement>\n")
+        while parsed_lines[index] != "<symbol> ; </symbol>\n":
+            xml_file.write(parsed_lines[index])
+            index += 1
+        xml_file.write(parsed_lines[index])
+        index += 1
+
+        xml_file.write("</returnStatement>\n")
+
+        return index
+    
+    
+    def expressionDecList(index):
+        xml_file.write(parsed_lines[index])
+        index += 1
+        xml_file.write("<expressionList>\n")
+        if parsed_lines[index] != "<symbol> ) </symbol>\n":
+            index = expressionDec(index)
+        xml_file.write("</expressionList>\n")
+        xml_file.write(parsed_lines[index])
+        index += 1
+
+        return index
+
+
+    def expressionDec(index):
+
+        xml_file.write("<expression>\n")
+        while parsed_lines[index] != "<symbol> ) </symbol>\n" and parsed_lines[index] != "<symbol> ; </symbol>\n" and parsed_lines[index] != "<symbol> ] </symbol>\n":
+            if parsed_lines[index + 1] == "<symbol> . </symbol>\n":
+                xml_file.write("<term>\n")
+                while parsed_lines[index] != "<symbol> ( </symbol>\n":
+                    xml_file.write(parsed_lines[index])
+                    index += 1
+                index = expressionDecList(index)
+                xml_file.write("</term>\n")
+
+            elif parsed_lines[index + 1] == "<symbol> [ </symbol>\n":
+                xml_file.write("<term>\n")
+                xml_file.write(parsed_lines[index])
+                index += 1
+                xml_file.write(parsed_lines[index])
+                index += 1
+                index = expressionDec(index)
+                xml_file.write(parsed_lines[index])
+                index += 1
+                xml_file.write("</term>\n")
+
+            elif parsed_lines[index] == "<symbol> ( </symbol>\n":
+                index = expressionDecList(index)
+
+            else:
+                if parsed_lines[index].startswith("<symbol>"):
+                    xml_file.write(parsed_lines[index])
+                    index += 1
+                else:
+                    xml_file.write("<term>\n")
+                    xml_file.write(parsed_lines[index])
+                    index += 1
+                    xml_file.write("</term>\n")
+
+        xml_file.write("</expression>\n")
+
+        return index
+
+
+    def letDec(index):
+        xml_file.write("<letStatement>\n")
+
+        while parsed_lines[index] != "<symbol> ; </symbol>\n":
+            if parsed_lines[index] == "<symbol> ( </symbol>\n" or parsed_lines[index] == "<symbol> [ </symbol>\n":
+                xml_file.write(parsed_lines[index])
+                index += 1
+                index = expressionDec(index)
+                xml_file.write(parsed_lines[index])
+                index += 1
+            elif parsed_lines[index] == "<symbol> = </symbol>\n":
+                xml_file.write(parsed_lines[index])
+                index += 1
+                index = expressionDec(index)
+            else:
+                xml_file.write(parsed_lines[index])
+                index += 1
+        xml_file.write(parsed_lines[index])
+        index += 1
+
+        xml_file.write("</letStatement>\n")
+
+        return index
+    
+
+    def whileDec(index):
+        xml_file.write("<whileStatement>\n")
+        xml_file.write(parsed_lines[index])
+        index += 1
+
+        while parsed_lines[index] == "<symbol> ( </symbol>\n" or parsed_lines[index] == "<symbol> { </symbol>\n":
+            if parsed_lines[index] == "<symbol> ( </symbol>\n":
+                xml_file.write(parsed_lines[index])
+                index += 1
+                index = expressionDec(index)
+                xml_file.write(parsed_lines[index])
+                index += 1
+            elif parsed_lines[index] == "<symbol> { </symbol>\n":
+                xml_file.write(parsed_lines[index])
+                index += 1
+                index = statementDec(index)
+                xml_file.write(parsed_lines[index])
+                index += 1
+
+        xml_file.write("</whileStatement>\n")
+
+        return index
+
+
+    while index < len(parsed_lines):
+        if parsed_lines[index] == "<keyword> class </keyword>\n":
+              index = classDec(index)
+        else:
+            index += 1
+
+        
+
     xml_file.close()
         
 
@@ -313,4 +412,3 @@ def hack_assembler():
             code(parsed_lines, os.path.splitext(file_path)[0])
 
 hack_assembler()
-
