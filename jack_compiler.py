@@ -160,6 +160,8 @@ def code(parsed_lines, filename):
                 index = subroutineDec(index)
             else:
                 index = classVarDec(index)
+        xml_file.write(parsed_lines[index])
+        index += 1
 
         xml_file.write("</class>\n")
 
@@ -201,7 +203,6 @@ def code(parsed_lines, filename):
         index += 1
         xml_file.write("</subroutineBody>\n")
         xml_file.write("</subroutineDec>\n")
-        xml_file.write(parsed_lines[index])
 
         return index
     
@@ -252,6 +253,41 @@ def code(parsed_lines, filename):
         return index
 
 
+    def ifDec(index):
+        xml_file.write("<ifStatement>\n")
+        while parsed_lines[index] != "<symbol> ( </symbol>\n":
+            xml_file.write(parsed_lines[index])
+            index += 1
+        xml_file.write(parsed_lines[index])
+        index += 1
+
+        index = expressionDec(index)
+
+        while parsed_lines[index] != "<symbol> { </symbol>\n":
+            xml_file.write(parsed_lines[index])
+            index += 1
+        xml_file.write(parsed_lines[index])
+        index += 1
+
+        index = statementDec(index)
+
+        xml_file.write(parsed_lines[index])
+        index += 1
+
+        if parsed_lines[index] == "<keyword> else </keyword>\n":
+            xml_file.write(parsed_lines[index])
+            index += 1
+            xml_file.write(parsed_lines[index])
+            index += 1
+            index = statementDec(index)
+            xml_file.write(parsed_lines[index])
+            index += 1
+
+        xml_file.write("</ifStatement>\n")
+
+        return index
+
+
     def doDec(index):
         xml_file.write("<doStatement>\n")
         while parsed_lines[index] != "<symbol> ; </symbol>\n":
@@ -267,11 +303,13 @@ def code(parsed_lines, filename):
 
         return index
     
+    
     def returnDec(index):
         xml_file.write("<returnStatement>\n")
+        xml_file.write(parsed_lines[index])
+        index += 1
         while parsed_lines[index] != "<symbol> ; </symbol>\n":
-            xml_file.write(parsed_lines[index])
-            index += 1
+            index = expressionDec(index)
         xml_file.write(parsed_lines[index])
         index += 1
 
