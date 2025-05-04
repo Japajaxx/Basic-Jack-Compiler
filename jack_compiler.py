@@ -261,7 +261,7 @@ def code(parsed_lines, filename):
         xml_file.write(parsed_lines[index])
         index += 1
 
-        index = expressionDec(index)
+        index = expressionDec(index, thing=False)
 
         while parsed_lines[index] != "<symbol> { </symbol>\n":
             xml_file.write(parsed_lines[index])
@@ -309,7 +309,7 @@ def code(parsed_lines, filename):
         xml_file.write(parsed_lines[index])
         index += 1
         while parsed_lines[index] != "<symbol> ; </symbol>\n":
-            index = expressionDec(index)
+            index = expressionDec(index, thing=False)
         xml_file.write(parsed_lines[index])
         index += 1
 
@@ -323,7 +323,7 @@ def code(parsed_lines, filename):
         index += 1
         xml_file.write("<expressionList>\n")
         if parsed_lines[index] != "<symbol> ) </symbol>\n":
-            index = expressionDec(index)
+            index = expressionDec(index, thing=False)
         xml_file.write("</expressionList>\n")
         xml_file.write(parsed_lines[index])
         index += 1
@@ -331,8 +331,10 @@ def code(parsed_lines, filename):
         return index
 
 
-    def expressionDec(index):
-        xml_file.write("<expression>\n")
+    def expressionDec(index, thing):
+
+        if not thing:
+            xml_file.write("<expression>\n")
         while parsed_lines[index] not in ["<symbol> ) </symbol>\n", "<symbol> ; </symbol>\n", "<symbol> ] </symbol>\n"]:
             if parsed_lines[index] == "<symbol> ( </symbol>\n":
                 # Peek ahead to determine if it's a list or a single term
@@ -342,16 +344,16 @@ def code(parsed_lines, filename):
                     xml_file.write("<term>\n")
                     xml_file.write(parsed_lines[index])  # Write the opening parenthesis
                     index += 1
-                    index = expressionDec(index)  # Parse the inner expression
+                    index = expressionDec(index, thing=False)  # Parse the inner expression
                     xml_file.write(parsed_lines[index])  # Write the closing parenthesis
                     index += 1
                     xml_file.write("</term>\n")
-            elif parsed_lines[index] in ["<symbol> - </symbol>\n", "<symbol> ~ </symbol>\n"]:
+            elif parsed_lines[index] in ["<symbol> - </symbol>\n", "<symbol> ~ </symbol>\n"] and parsed_lines[index - 1] == "<symbol> ( </symbol>\n":
                 # Handle unary operators
                 xml_file.write("<term>\n")
                 xml_file.write(parsed_lines[index])  # Write the unary operator
                 index += 1
-                index = expressionDec(index)  # Parse the term after the unary operator
+                index = expressionDec(index , thing=True)  # Parse the term after the unary operator
                 xml_file.write("</term>\n")
             elif parsed_lines[index + 1] == "<symbol> . </symbol>\n":
                 xml_file.write("<term>\n")
@@ -366,7 +368,7 @@ def code(parsed_lines, filename):
                 index += 1
                 xml_file.write(parsed_lines[index])
                 index += 1
-                index = expressionDec(index)
+                index = expressionDec(index, thing=False)
                 xml_file.write(parsed_lines[index])
                 index += 1
                 xml_file.write("</term>\n")
@@ -384,7 +386,8 @@ def code(parsed_lines, filename):
                     xml_file.write(parsed_lines[index])
                     index += 1
                     xml_file.write("</term>\n")
-        xml_file.write("</expression>\n")
+        if not thing:
+            xml_file.write("</expression>\n")
         return index
 
     def isExpressionList(index):
@@ -403,13 +406,13 @@ def code(parsed_lines, filename):
             if parsed_lines[index] == "<symbol> ( </symbol>\n" or parsed_lines[index] == "<symbol> [ </symbol>\n":
                 xml_file.write(parsed_lines[index])
                 index += 1
-                index = expressionDec(index)
+                index = expressionDec(index, thing=False)
                 xml_file.write(parsed_lines[index])
                 index += 1
             elif parsed_lines[index] == "<symbol> = </symbol>\n":
                 xml_file.write(parsed_lines[index])
                 index += 1
-                index = expressionDec(index)
+                index = expressionDec(index, thing=False)
             else:
                 xml_file.write(parsed_lines[index])
                 index += 1
@@ -430,7 +433,7 @@ def code(parsed_lines, filename):
             if parsed_lines[index] == "<symbol> ( </symbol>\n":
                 xml_file.write(parsed_lines[index])
                 index += 1
-                index = expressionDec(index)
+                index = expressionDec(index, thing=False)
                 xml_file.write(parsed_lines[index])
                 index += 1
             elif parsed_lines[index] == "<symbol> { </symbol>\n":
